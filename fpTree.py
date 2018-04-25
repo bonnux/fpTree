@@ -25,15 +25,15 @@ def createTree(dataSet, minSup):
     for i in headerTable.keys():
         if headerTable[i] < minSup:
             del(headerTable[i])
-    # 空元素集，返回空
+    # 如果没有一个元素项的频率超过最小支持度，则返回空
     freqItemSet = set(headerTable.keys())
     if len(freqItemSet) == 0:
         return None, None
-    # 增加一个数据项，用于存放指向相似元素项指针
+    # 在头指针表增加一个数据项，用于存放指向相似元素项指针
     for j in headerTable:
         headerTable[j] = [headerTable[j], None]
-    retTree = treeNode('Null Set', 1, None) # 根节点
 
+    retTree = treeNode('Null Set', 1, None) # 根节点
     # 再次遍历经过筛选的数据集，创建fp树
     for tranSet, count in dataSet.items():
         localD = {}    # 对一个项集，记录其中每个元素项在数据集中的频数
@@ -57,23 +57,17 @@ def updateTree(items, inTree, headerTable,count):
             headerTable[items[0]][1] = inTree.children[items[0]]
         else:
             updateHeader(headerTable[items[0]][1],inTree.children[items[0]])
-     # 对剩下的元素项递归调用本函数
+     #对剩下的元素项递归调用本函数
     if len(items) > 1:
         updateTree(items[1::], inTree.children[items[0]], headerTable, count)    
 
-#获取头指针表中该元素项对应的单链表的尾节点，然后将其指向新节点targetNode            
+#辅助函数：获取头指针表中该元素项对应的单链表的尾节点，然后将其指向新节点targetNode
 def updateHeader(nodeToTest, targetNode):
     while (nodeToTest.nodeLink != None):
         nodeToTest = nodeToTest.nodeLink
-    nodeToTest.nodeLink = targetNode   
+    nodeToTest.nodeLink = targetNode
 
-def createInitSet(dataSet):
-    retDict = {}
-    for trans in dataSet:
-        retDict[frozenset(trans)] = 1
-    return retDict
-
-#给定元素项生成一个条件模式基
+#寻找前缀路径，对给定元素项生成一个条件模式基
 def findPrefixPath(basePat,treeNode):
     condPats = {}
     while treeNode != None:
@@ -97,11 +91,19 @@ def mineTree(inTree,headerTable,minSup,preFix,freqItemList):
         newFreqSet = preFix.copy()
         newFreqSet.add(basePat)
         freqItemList.append(newFreqSet)
+        #生成条件模式基
         condPattBases = findPrefixPath(basePat, headerTable[basePat][1])
+        #创建条件fp树
         myConTree,myHead = createTree(condPattBases, minSup)
         
         if myHead != None:
             mineTree(myConTree, myHead, minSup, newFreqSet, freqItemList)
+
+def createInitSet(dataSet):
+    retDict = {}
+    for trans in dataSet:
+        retDict[frozenset(trans)] = 1
+    return retDict
 
 if __name__ == "__main__":
     # 最小支持度
